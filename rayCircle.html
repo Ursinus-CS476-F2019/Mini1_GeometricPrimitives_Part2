@@ -1,0 +1,203 @@
+<!--Programmer: Chris Tralie!-->
+<!--Purpose: Front end point chooser / debugger for triangle circumscriber function!-->
+<html>
+<head>
+<!-- This is how you include external scripts in Javascript !-->
+<script src= "gl-matrix-min.js"></script>
+<script src = "GeomPrimitives.js"></script>
+<style>
+button {
+  outline: none;
+  background-color: #bfbfbf;
+  border: 2px solid #000;
+  color: #000;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 6px;
+  cursor: pointer;
+  border-radius: 10px;
+}
+</style>
+</head>
+<body>
+
+<h2><a name = "angle">Task 5: Ray Intersect Circle (10 points)</a></h2>
+
+In the GUI below, click on the button "select ray" to select a ray.  When this button has been selected, left click to select the endpoint of the ray, and right click to select another point which determines the direction of the ray.  To select a circle, click the "select circle" button.  Then, left click to choose the center of the circle, and right click to choose a point on the circle, which will be used to determine its radius.  Once you have selected a ray and a circle, the program will run your code <code>rayIntersectCircle(p0, v, c, r)</code> and draw the intersection points you have calculated.<BR><BR>
+<table>
+<tr>
+<td width = "200">
+<table border = "1" cellpadding = 2>
+    <tr><td colspan="2"><button type = "button" onclick = "selectRay()" id="selectingRay">Select Ray</button></td></tr>
+    <tr><td align = "right"><font color = "#ff0000"><b>p0</b></font></td><td><div id="p0">Not Selected</div></td></tr>
+    <tr><td align = "right"><font color = "#ff00ff"><b>v</b></font></td><td><div id="v">Not Selected</div></td></tr>
+    <tr><td colspan="2"><button type = "button" onclick = "selectCircle()" id="selectingCircle">Select Circle</button></td></tr>
+    <tr><td align = "right"><font color = "#0000ff"><b>c</b></font></td><td><div id="c">Not Selected</div></td></tr>
+    <tr><td align = "right"><font color = "#000000"><b>r</b></font></td><td><div id="r">Not specified</div></td></tr>
+    <tr><td align = "right"><font color = "#00aa00">Intersection</font></td><td><div id="Intersection"></div></td></tr>
+</table>
+</td>
+<td>
+<canvas id = "segcanvas" width = "600" height = "600" style="border:1px solid #000000;">
+</canvas>
+</td>
+</tr>
+</table>
+
+<script>
+var p0 = null;
+var p1 = null;
+var v = null;
+var c = null;
+var r = 0.0;
+var intersection = [];
+var selectingRay = true;
+
+var rayButton = document.getElementById("selectingRay");
+var circleButton = document.getElementById("selectingCircle");
+
+var canvas = document.getElementById('segcanvas');
+var ctx = canvas.getContext("2d"); //For drawing
+//Need this to disable that annoying menu that pops up on right click
+canvas.addEventListener("contextmenu", function(e){ e.stopPropagation(); e.preventDefault(); return false; }); 
+
+colors = ["#ff0000", "#ff00ff", "#0000ff", "#00aa00"];
+
+function selectRay() {
+    selectingRay = true;
+    rayButton.style.background = "#bb1111";
+    circleButton.style.background = "#bfbfbf";
+
+}
+
+function selectCircle() {
+    selectingRay = false;
+    rayButton.style.background = "#bfbfbf";
+    circleButton.style.background = "#bb1111";
+}
+
+selectRay();
+
+function drawArrow(ctx, fromx, fromy, tox, toy, color){
+    // From https://stackoverflow.com/questions/808826/draw-arrow-on-canvas-tag
+    //variables to be used when creating the arrow
+    var headlen = 5;
+
+    var angle = Math.atan2(toy-fromy,tox-fromx);
+
+    //starting path of the arrow from the start square to the end square and drawing the stroke
+    ctx.moveTo(fromx, fromy);
+    ctx.lineTo(tox, toy);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    //starting a new path from the head of the arrow to one of the sides of the point
+    ctx.moveTo(tox, toy);
+    ctx.lineTo(tox-headlen*Math.cos(angle-Math.PI/7),toy-headlen*Math.sin(angle-Math.PI/7));
+
+    //path from the side point of the arrow, to the other side point
+    ctx.lineTo(tox-headlen*Math.cos(angle+Math.PI/7),toy-headlen*Math.sin(angle+Math.PI/7));
+
+    //path from the side point back to the tip of the arrow, and then again to the opposite side point
+    ctx.lineTo(tox, toy);
+    ctx.lineTo(tox-headlen*Math.cos(angle-Math.PI/7),toy-headlen*Math.sin(angle-Math.PI/7));
+
+    //draws the paths created above
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 5;
+    ctx.stroke();
+    ctx.fillStyle = color;
+    ctx.fill();
+}
+
+function repaint() {
+    var dW = 5;
+    var W = canvas.width;
+    var H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    // Draw circle and center
+    if (!(c === null)) {
+        ctx.strokeStyle = "black";
+        console.log("r = " + r);
+        ctx.moveTo(c[0]+r, c[1]);
+        ctx.arc(c[0], c[1], r, 0, 2*Math.PI);
+        ctx.stroke();
+        ctx.fillStyle = colors[2];
+        ctx.fillRect(c[0]-dW, c[1]-dW, dW*2+1, dW*2+1);
+    }
+
+    // Draw intersection
+    if (!(intersection === null)) {
+        ctx.fillStyle = colors[3];
+        ctx.fillRect(intersection[0]-dW, intersection[1]-dW, dW*2+1, dW*2+1);
+    }
+
+    // Draw ray
+    ctx.beginPath();
+    if (!(p0 === null)) {
+        ctx.fillStyle = colors[0];
+        ctx.fillRect(p0[0]-dW, p0[1]-dW, dW*2+1, dW*2+1);
+        if (!(p1 === null)) {
+            drawArrow(ctx, p0[0], p0[1], p1[0], p1[1], colors[1]);
+        }
+    }    
+
+
+}
+
+
+function selectPoint(evt) {
+    var mousePos = getMousePos(canvas, evt);
+    var X = mousePos.X;
+    var Y = mousePos.Y
+    var clickType = "LEFT";
+	evt.preventDefault();
+	if (evt.which) {
+	    if (evt.which == 3) clickType = "RIGHT";
+	    if (evt.which == 2) clickType = "MIDDLE";
+	}
+	else if (evt.button) {
+	    if (evt.button == 2) clickType = "RIGHT";
+	    if (evt.button == 4) clickType = "MIDDLE";
+	}
+    
+    if (clickType == "LEFT") {
+        if (selectingRay) {
+            p0 = vec3.fromValues(X, Y, 0);
+            document.getElementById("p0").innerHTML = "(" + p0[0].toFixed(0) + ", " + p0[1].toFixed(0) + ")";
+        }
+        else {
+            c = vec3.fromValues(X, Y, 0);
+            document.getElementById("c").innerHTML = "(" + c[0].toFixed(0) + ", " + c[1].toFixed(0) + ")";
+        }
+    }
+    else {
+        if (selectingRay) {
+            p1 = vec3.fromValues(X, Y, 0);
+        }
+        else {
+            let v = vec3.fromValues(X, Y, 0);
+            if (!(c === null)) {
+                vec3.subtract(v, v, c);
+                r = vec3.dot(v, v);
+                r = Math.sqrt(r);
+            }
+        }
+    }
+    repaint();
+}
+
+canvas.addEventListener("mousedown", selectPoint);
+canvas.addEventListener("touchstart", selectPoint); //Works on mobile devices!
+repaint();
+
+</script>
+
+
+</body>
+</html>
