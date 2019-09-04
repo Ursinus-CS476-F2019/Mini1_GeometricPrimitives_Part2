@@ -1,5 +1,5 @@
 <!--Programmer: Chris Tralie!-->
-<!--Purpose: Front end point chooser / debugger for triangle circumscriber function!-->
+<!--Purpose: Front end ray/circle chooser / debugger for ray intersect circle function!-->
 <html>
 <head>
 <!-- This is how you include external scripts in Javascript !-->
@@ -37,7 +37,7 @@ In the GUI below, click on the button "select ray" to select a ray.  When this b
     <tr><td colspan="2"><button type = "button" onclick = "selectCircle()" id="selectingCircle">Select Circle</button></td></tr>
     <tr><td align = "right"><font color = "#0000ff"><b>c</b></font></td><td><div id="c">Not Selected</div></td></tr>
     <tr><td align = "right"><font color = "#000000"><b>r</b></font></td><td><div id="r">Not specified</div></td></tr>
-    <tr><td align = "right"><font color = "#00aa00">Intersection</font></td><td><div id="Intersection"></div></td></tr>
+    <tr><td align = "right"><font color = "black">Intersection</font></td><td><div id="Intersection"></div></td></tr>
 </table>
 </td>
 <td>
@@ -64,7 +64,7 @@ var ctx = canvas.getContext("2d"); //For drawing
 //Need this to disable that annoying menu that pops up on right click
 canvas.addEventListener("contextmenu", function(e){ e.stopPropagation(); e.preventDefault(); return false; }); 
 
-colors = ["#ff0000", "#ff00ff", "#0000ff", "#00aa00"];
+colors = ["#ff0000", "#ff00ff", "#0000ff", "#00aa00", "#aaaa00", "#00aaaa"];
 
 function selectRay() {
     selectingRay = true;
@@ -131,11 +131,11 @@ function repaint() {
         ctx.fillRect(c[0]-dW, c[1]-dW, dW*2+1, dW*2+1);
     }
 
-    // Draw intersection
-    if (!(intersection === null)) {
-        ctx.fillStyle = colors[3];
-        ctx.fillRect(intersection[0]-dW, intersection[1]-dW, dW*2+1, dW*2+1);
-    }
+    // Draw intersection points if there are any
+    intersection.forEach(function(item, idx){
+        ctx.fillStyle = colors[3+idx];
+        ctx.fillRect(item[0]-dW, item[1]-dW, dW*2+1, dW*2+1);
+    })
 
     // Draw ray
     ctx.beginPath();
@@ -179,6 +179,9 @@ function selectPoint(evt) {
     else {
         if (selectingRay) {
             p1 = vec3.fromValues(X, Y, 0);
+            v = vec3.create();
+            vec3.subtract(v, p1, p0);
+            document.getElementById("v").innerHTML = "(" + v[0].toFixed(0) + ", " + v[1].toFixed(0) + ")";
         }
         else {
             let v = vec3.fromValues(X, Y, 0);
@@ -188,6 +191,17 @@ function selectPoint(evt) {
                 r = Math.sqrt(r);
             }
         }
+    }
+    if (!(p0 === null) && !(v === null) & !(c === null)) {
+        intersection = rayIntersectCircle(p0, v, c, r);
+        let s = "";
+        intersection.forEach(function(item, index){
+            s += "<font color = " + colors[3+index] + ">" + "(" + item[0].toFixed(0) + ", " + item[1].toFixed(0) + ")</font>";
+            if (index < intersection.length-1) {
+                s += "<BR>";
+            }
+        });
+        document.getElementById("Intersection").innerHTML = s;
     }
     repaint();
 }

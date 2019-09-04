@@ -26,3 +26,14 @@ function rayIntersectCircle(p0, v, c, r) {
     return []; //This is a dummy return
 }
 
+
+
+
+function getMousePos(canvas, evt) {
+	var rect = canvas.getBoundingClientRect();
+	return {
+	    X: evt.clientX - rect.left,
+	    Y: evt.clientY - rect.top
+	};
+}
+
