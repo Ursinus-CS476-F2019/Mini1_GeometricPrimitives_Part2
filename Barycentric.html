@@ -1,0 +1,187 @@
+<!--Programmer: Chris Tralie!-->
+<!--Purpose: Front end point chooser / debugger for triangle circumscriber function!-->
+<html>
+<head>
+<!-- This is how you include external scripts in Javascript !-->
+<script src= "gl-matrix-min.js"></script>
+<script src = "GeomPrimitives.js"></script>
+<style>
+        button {
+          outline: none;
+          background-color: #bfbfbf;
+          border: 2px solid #000;
+          color: #000;
+          padding: 15px 32px;
+          text-align: center;
+          text-decoration: none;
+          display: inline-block;
+          font-size: 16px;
+          margin: 4px 6px;
+          cursor: pointer;
+          border-radius: 10px;
+        }
+        </style>
+</head>
+<body>
+
+<h2><a name = "angle">Task 6: Triangle Barycenter (8 points)</a></h2>
+<p>
+    In the GUI below, choose three points in the plane the plane (z = 0) to test make a triangle.  When selecting a triangle, left click to select the points, and right click to delete the most recently selected point.  Then, select a point somewhere else in the plane.  The 
+</p>
+
+<p>
+    <b>NOTE:</b> This GUI runs in the plane for simplicity (all z coordinates are zero), but this should work in 3D, as per the assignment spec.  So if the point is above or below the triangle, for instance, you should return (0, 0, 0).  Check out the unit tests to make sure your code works in 3D.
+</p>
+<table>
+<tr>
+<td width = "200">
+<table border = "1" cellpadding = 2>
+<tr><td colspan=2><button type = "button" onclick = "selectTriangle()" id="selectingTriangle">Select Triangle</button></td></tr>
+<tr><td align = "right"><font color = "#ff0000"><b>a</b></font></td><td><div id="Point0">Not Selected</div></td></tr>
+<tr><td align = "right"><font color = "#ff00ff"><b>b</b></font></td><td><div id="Point1">Not Selected</div></td></tr>
+<tr><td align = "right"><font color = "#0000ff"><b>c</b></font></td><td><div id="Point2">Not Selected</div></td></tr>
+<tr><td colspan=2><button type = "button" onclick = "selectPoint()" id="selectingPoint">Select Point</button></td></tr>
+<tr><td align="right"><font color = "#00aa00"><b>p</b></font></td><td><div id="p"></div></td></tr>
+</table>
+</td>
+<td>
+<canvas id = "segcanvas" width = "600" height = "600" style="border:1px solid #000000;">
+</canvas>
+</td>
+</tr>
+</table>
+
+<script>
+var Ps = []; //Points [a, b, c] on the triangle
+var p = null;
+var coords = vec3.create();
+var canvas = document.getElementById('segcanvas');
+var ctx = canvas.getContext("2d"); //For drawing
+ctx.font = "16px Arial";
+//Need this to disable that annoying menu that pops up on right click
+canvas.addEventListener("contextmenu", function(e){ e.stopPropagation(); e.preventDefault(); return false; }); 
+var selectingTriangle = true;
+
+var triangleButton = document.getElementById("selectingTriangle");
+var pointButton = document.getElementById("selectingPoint");
+
+function selectPoint() {
+    selectingTriangle = false;
+    triangleButton.style.background = "#bfbfbf";
+    pointButton.style.background = "#bb1111";
+}
+
+function selectTriangle() {
+    selectingTriangle = true;
+    triangleButton.style.background = "#bb1111";
+    pointButton.style.background = "#bfbfbf";
+}
+
+selectTriangle();
+
+colors = ["#ff0000", "#ff00ff", "#0000ff", "#00aa00"];
+
+function repaint() {
+    var dW = 5;
+    var W = canvas.width;
+    var H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    if (!(p === null)) {
+        //Draw point
+        ctx.fillStyle = colors[3];
+        ctx.fillRect(p[0]-dW, p[1]-dW, dW*2+1, dW*2+1);
+    }
+    
+    //Draw triangle points
+    for (var i = 0; i < Ps.length; i++) {
+        ctx.fillStyle = colors[i];
+        ctx.fillRect(Ps[i][0]-dW, Ps[i][1]-dW, dW*2+1, dW*2+1);
+    }
+    
+    //Draw triangle edges
+    ctx.fillStyle = "#000000";
+    for (var i = 0; i < Ps.length; i++) {
+        ctx.beginPath();
+        ctx.moveTo(Ps[i][0], Ps[i][1]);
+        ctx.lineTo(Ps[(i+1)%Ps.length][0], Ps[(i+1)%Ps.length][1]);
+        ctx.stroke();        
+    }
+
+    // Draw coordinates next to the points
+    if (Ps.length == 3) {
+        coords.forEach(function(val, index) {
+            ctx.fillText(val.toFixed(2), Ps[index][0] + 5, Ps[index][1]);
+        });
+    }
+}
+
+// Call the code and draw text where appropriate
+function finalizePointSelection() {
+	if (Ps.length == 3 && !(p === null)) {
+        coords = getBarycentricCoords(Ps[0], Ps[1], Ps[2], p);
+    }
+    else {
+        coords = coords.map(function(){return 0});
+    }
+	repaint();
+}
+
+function selectVec(evt) {
+    var mousePos = getMousePos(canvas, evt);
+    var X = mousePos.X;
+    var Y = mousePos.Y
+    var clickType = "LEFT";
+	evt.preventDefault();
+	if (evt.which) {
+	    if (evt.which == 3) clickType = "RIGHT";
+	    if (evt.which == 2) clickType = "MIDDLE";
+	}
+	else if (evt.button) {
+	    if (evt.button == 2) clickType = "RIGHT";
+	    if (evt.button == 4) clickType = "MIDDLE";
+	}
+    
+    if (selectingTriangle) {
+        if (clickType == "LEFT") {
+            //Add a point
+            if (Ps.length < 3) {
+                Ps.push(vec3.fromValues(X, Y, 0));
+            }
+            else {
+                //If there's already a third point, simply replace it
+                Ps[2] = vec3.fromValues(X, Y, 0);
+            }
+        }
+        else {
+            //Remove point
+            if (Ps.length > 0) {
+                Ps.pop();
+            }
+        }
+        //Update text describing point coordinates
+        for (var i = 0; i < 3; i++) {
+            if (i < Ps.length) {
+                document.getElementById("Point"+i).innerHTML = "(" + Ps[i][0].toFixed(1) + "," + Ps[i][1].toFixed(1) + ")";    
+            }
+            else {
+                document.getElementById("Point"+i).innerHTML = "Not Selected";            
+            }
+        }
+    }
+    else {
+        p = vec3.fromValues(X, Y, 0);
+        document.getElementById("p").innerHTML = "(" + p[0].toFixed(1) + "," + p[1].toFixed(1) + ")";
+    }
+    finalizePointSelection();
+}
+
+canvas.addEventListener("mousedown", selectVec);
+canvas.addEventListener("touchstart", selectVec); //Works on mobile devices!
+repaint();
+
+</script>
+
+
+</body>
+</html>

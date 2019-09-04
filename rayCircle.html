@@ -24,9 +24,17 @@ button {
 </head>
 <body>
 
-<h2><a name = "angle">Task 5: Ray Intersect Circle (10 points)</a></h2>
+<h2><a name = "raysphere">Task 5: Ray Intersect Sphere (8 points)</h2>
+<h3>2D Circle Special Case Tester</h3>
 
-In the GUI below, click on the button "select ray" to select a ray.  When this button has been selected, left click to select the endpoint of the ray, and right click to select another point which determines the direction of the ray.  To select a circle, click the "select circle" button.  Then, left click to choose the center of the circle, and right click to choose a point on the circle, which will be used to determine its radius.  Once you have selected a ray and a circle, the program will run your code <code>rayIntersectCircle(p0, v, c, r)</code> and draw the intersection points you have calculated.<BR><BR>
+<p>
+        In the GUI below, click on the button "select ray" to select a ray.  When this button has been selected, left click to select the endpoint of the ray, and right click to select another point which determines the direction of the ray.  To select a circle, click the "select circle" button.  Then, left click to choose the center of the circle, and right click to choose a point on the circle, which will be used to determine its radius.  Once you have selected a ray and a circle, the program will run your code <code>raySphere(p0, v, c, r)</code> and draw the intersection points you have calculated
+</p>
+
+<p>
+    <b>NOTE: </b> This tests your code in the special case of 2D; all z components of vectors you select are zero, and the z coordinates of the intersection points you return are ignored.  As a result, the sphere is centered on the XY plane, and the ray will hit the great circle of the sphere if it does happen to intersect the sphere.  However, it is expected that your code works in general 3D rays and spheres.  Have a look at the unit tests to see if you can handle 3D cases as well.
+</p>
+
 <table>
 <tr>
 <td width = "200">
@@ -193,7 +201,7 @@ function selectPoint(evt) {
         }
     }
     if (!(p0 === null) && !(v === null) & !(c === null)) {
-        intersection = rayIntersectCircle(p0, v, c, r);
+        intersection = rayIntersectSphere(p0, v, c, r);
         let s = "";
         intersection.forEach(function(item, index){
             s += "<font color = " + colors[3+index] + ">" + "(" + item[0].toFixed(0) + ", " + item[1].toFixed(0) + ")</font>";
