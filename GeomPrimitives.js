@@ -39,7 +39,10 @@ function rayIntersectSphere(p0, v, c, r) {
  * @return {vec3} An vec3 with the barycentric coordinates (alpha, beta, gamma)
  * 				  corresponding to a, b, and c, respectively, so that
  * 				  alpha + beta + gamma = 1, and alpha, beta, gamma >= 0
- * 				  If p is not inside of /\abc, then return [0, 0, 0]
+ *          CORNER CASES:
+ * 				  (1) If p is not inside of /\abc, then return [0, 0, 0]
+ *          (2) If /\abc is zero area, then return [1, 0, 0] iff p = a (=b=c)
+ *              otherwise, return [0, 0, 0]
  */
 function getBarycentricCoords(a, b, c, p) {
 	// TODO: Fill this in
@@ -57,9 +60,12 @@ function getBarycentricCoords(a, b, c, p) {
  * @param {vec3} b Triangle vertex 2
  * @param {vec3} c Triangle vertex 3
  * 
- * @return {list} A list of vec3 objetcs.  The list should be empty
- * if there is no intersection, or it should contain exactly one vec3
- * object if there is an intersection
+ * @return {list} A list of vec3 objects.  The list should be empty
+ *          if there is no intersection, or it should contain 
+ *          exactly one vec3 object if there is an intersection
+ *          CORNER CASES:
+ *          (1) If the ray is parallel to the plane, 
+*               return an empty list
  */
 function rayIntersectTriangle(p0, v, a, b, c) {
 	// TODO: Fill this in
