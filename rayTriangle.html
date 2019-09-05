@@ -1,0 +1,189 @@
+<!--Programmer: Chris Tralie!-->
+<!--Purpose: Front end point chooser / debugger for angle function!-->
+<html>
+<head>
+<!-- This is how you include external scripts in Javascript !-->
+<script src = "gl-matrix-min.js"></script>
+<script src = "plotly.min.js"></script>
+<script src = "GeomPrimitives.js"></script>
+<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<h2><a name = "angle">Task 7: Ray Intersect Triangle (8 points)</a></h2>
+
+<table>
+<tr>
+<td>
+<!--Input Region!-->
+<table>
+
+<tr><td colspan=8><h2>Ray</h2></td></tr>
+<tr>
+  <td><h2><font color = "#0000ff">p0:</u> </h2></td>
+  <td><h1>(</h1></td><td><input type="text" id = "p0x_2" size="3"></input></td><td><h1>,</h1></td>
+  <td><input type="text" id = "p0y_2" size="3"></input></td><td><h1>,</h1></td>
+  <td><input type="text" id = "p0z_2" size="3"></input></td>
+  <td><h1>)</h1></td>
+</tr>
+<tr>
+  <td><h2><font color = "#ff0000">v:</u> </h2></td>
+  <td><h1>(</h1></td><td><input type="text" id = "vx_2" size="3"></input></td><td><h1>,</h1></td>
+  <td><input type="text" id = "vy_2" size="3"></input></td><td><h1>,</h1></td>
+  <td><input type="text" id = "vz_2" size="3"></input></td>
+  <td><h1>)</h1></td>
+</tr>
+
+
+
+<tr><td colspan=8><h2>Triangle</h2></td></tr>
+<tr>
+<td><h2><font color = "#ff00ff">a:</u> </h2></td>
+<td><h1>(</h1></td><td><input type="text" id = "ax_2" size="3"></input></td><td><h1>,</h1></td>
+<td><input type="text" id = "ay_2" size="3"></input></td><td><h1>,</h1></td>
+<td><input type="text" id = "az_2" size="3"></input></td>
+<td><h1>)</h1></td>
+</tr>
+<tr>
+<td><h2><font color = "#aa0099">b:</font> </h2></td>
+<td><h1>(</h1></td><td><input type="text" id = "bx_2" size="3"></input></td><td><h1>,</h1></td>
+<td><input type="text" id = "by_2" size="3"></input></td><td><h1>,</h1></td>
+<td><input type="text" id = "bz_2" size="3"></input></td>
+<td><h1>)</h1></td>
+</tr>
+<tr>
+<td><h2><font color = "#550055">c:</font> </h2></td>
+<td><h1>(</h1></td><td><input type="text" id = "cx_2" size="3"></input></td><td><h1>,</h1></td>
+<td><input type="text" id = "cy_2" size="3"></input></td><td><h1>,</h1></td>
+<td><input type="text" id = "cz_2" size="3"></input></td>
+<td><h1>)</h1></td>
+</tr>
+</table>
+</td>
+<td>
+<!--Visualization Region!-->
+<table border = "1" width = 500 height = 500>
+<tr><td>
+<div id = "angleVis">Visualization goes here once you choose a ray and a triangle</div>
+</td></tr>
+</table>
+</td>
+</tr>
+</table>
+<button type = "button" onclick = "callComputeIntersection()">Compute intersection</button>
+<table>
+<tr><td><h3>Intersection:</h3></td><td><h3><p id="intersectionAnswer"></p></h3></td></tr>
+</table>
+
+<script>
+//This function extracts the angle between vectors ab and ac and outputs
+//the result as text, along with drawing the vectors in the GUI
+function callComputeIntersection() {
+    var ax = parseFloat(document.getElementById("ax_2").value);
+    var ay = parseFloat(document.getElementById("ay_2").value);
+    var az = parseFloat(document.getElementById("az_2").value);
+    var a = vec3.fromValues(ax, ay, az);
+    
+    var bx = parseFloat(document.getElementById("bx_2").value);
+    var by = parseFloat(document.getElementById("by_2").value);
+    var bz = parseFloat(document.getElementById("bz_2").value);
+    var b = vec3.fromValues(bx, by, bz);
+
+    var cx = parseFloat(document.getElementById("cx_2").value);
+    var cy = parseFloat(document.getElementById("cy_2").value);
+    var cz = parseFloat(document.getElementById("cz_2").value);
+    var c = vec3.fromValues(cx, cy, cz);
+
+    var p0x = parseFloat(document.getElementById("p0x_2").value);
+    var p0y = parseFloat(document.getElementById("p0y_2").value);
+    var p0z = parseFloat(document.getElementById("p0z_2").value);
+    var p0 = vec3.fromValues(p0x, p0y, p0z);
+
+    var vx = parseFloat(document.getElementById("vx_2").value);
+    var vy = parseFloat(document.getElementById("vy_2").value);
+    var vz = parseFloat(document.getElementById("vz_2").value);
+    var v = vec3.fromValues(vx, vy, vz);
+
+    var colors = ["#0000ff", "#ff0000", "#ff00ff", "#aa00aa", "#550055", "#00aa00"];
+    
+    //Log the vec3 objects to the console to make sure everything was parsed correctly
+    console.log("Computing intersection between the ray " + vec3.str(p0) + " + t * " + vec3.str(v) + " and the triangle (" + vec3.str(a) + ", " + vec3.str(b) + ", " + vec3.str(c) + ")");
+    
+    //Perform the projection
+    var res = rayIntersectTriangle(p0, v, a, b, c);
+    //Output the result to 2 decimal places
+    var s = "None";
+    if (res.length > 0) {
+      s = "d: (" + res[0][0] + ", " + res[0][1] + ", " + res[0][2] + ")";
+    }
+    document.getElementById("intersectionAnswer").innerHTML = "<font color = " + colors[5] + ">" + s + "</font>";
+    
+    // Plot the ray and intersection point
+    var p0viz = { x: [p0x], y: [p0y], z: [p0z],
+      mode: 'markers+lines', line: {color: '#ffffff', width: 10},
+      type: 'scatter3d', name: 'p0',
+      marker: {color: colors[0], size: 10, symbol: 'circle'}
+    };
+    var vviz = { x: [p0x, p0x+vx], y: [p0y, p0y+vy], z: [p0z, p0z+vz],
+      mode: 'lines', line: {color: colors[1], width: 10},
+      type: 'scatter3d', name: 'v',
+    };
+
+    
+    //Plot the triangle
+    var aviz = { x: [ax], y: [ay], z: [az],
+      mode: 'markers+lines', line: {color: '#ffffff', width: 10},
+      type: 'scatter3d', name: 'a',
+      marker: {color: colors[2], size: 10, symbol: 'circle'}
+    };
+    var bviz = { x: [bx], y: [by], z: [bz],
+      mode: 'markers+lines', line: {color: '#ffffff', width: 10},
+      type: 'scatter3d', name:'b',
+      marker: {color: colors[3], size: 10, symbol: 'circle'}
+    };
+    var cviz = { x: [cx], y: [cy], z: [cz],
+      mode: 'markers+lines', line: {color: '#ffffff', width: 10},
+      type: 'scatter3d', name:'c',
+      marker: {color: colors[4], size: 10, symbol: 'circle'}
+    };
+    var abviz = { x: [ax, bx], y: [ay, by], z: [az, bz],
+      mode: 'lines', line: {color: '#000000', width: 10},
+      type: 'scatter3d', name: 'ab',
+    };
+    var acviz = { x: [ax, cx], y: [ay, cy], z: [az, cz],
+      mode: 'lines', line: {color: '#555555', width: 10},
+      type: 'scatter3d', name: 'ac',
+    };
+    var bcviz = { x: [bx, cx], y: [by, cy], z: [bz, cz],
+      mode: 'lines', line: {color: '#777777', width: 10},
+      type: 'scatter3d', name: 'ac',
+    };
+    var axes = getAxesEqual([a, b, c]);
+    var data = [aviz, bviz, cviz, abviz, acviz, bcviz, p0viz, vviz];
+    if (res.length > 0) {
+      var dviz = { x: [res[0][0]], y: [res[0][1]], z: [res[0][2]],
+      mode: 'markers+lines', line: {color: "#ffffff", width: 10},
+      type: 'scatter3d', name: 'd',
+      marker: {color: colors[5], size: 10, symbol: 'circle'}
+      };
+
+      var p0dviz = { x: [p0x, res[0][0]], y: [p0y, res[0][1]], z: [p0z, res[0][2]],
+      mode: 'lines', line: {color: colors[5], width: 10},
+      type: 'scatter3d', name: 'p0d',
+      };
+      data.push(dviz);
+      data.push(p0dviz);
+    }
+
+    var layout = {
+      autosize: false, width: 500, height: 500,
+      margin: { l: 0, r: 0, b: 0, t: 65 }
+    };
+    Plotly.newPlot('angleVis', data, layout);    
+}
+
+</script>
+
+
+</body>
+</html>
